@@ -9,15 +9,30 @@ namespace Minecraft
     internal class Monster
     {
         public string Name { get; private set; }
+        public int Hearts { get; private set; }
         public List<Loot> Loot { get; private set; }
+
+        private SqlDatabase _reader;
         //public string Loot { get; private set; }
 
-        public Monster(string name, List<Loot> loot)
+        public Monster(string name, int hearts, int id, List<Loot> loot, SqlDatabase reader)
         {
             Name = name;
+            Hearts = hearts;
             Loot = loot;
+            _reader = reader;
+            GetLoot(id);
         }
 
+        public async Task GetLoot(int monsterId)
+        {
+            var monsterLoot = await _reader.GetMonsterLootId(monsterId);
+            monsterLoot.ForEach(x =>
+            {
+                Loot.Add(new Loot(x.Name, x.Quantity));
+            });
+          
+        }
         public HashSet<Loot> DropLoot()
         {
             var random = new Random(); //random
@@ -33,5 +48,16 @@ namespace Minecraft
 
             return DroppedLoot; //metoden returnerer lista med loot
         }
+
+        public void LoseHearts()
+        {
+            Hearts -= 3;
+        }
+
+        public void DamageSteve(Steve steve)
+        {
+            steve.LoseHearts();
+        }
+
     }
 }

@@ -10,48 +10,32 @@ namespace Minecraft
     internal class Furnace
     {
         public Steve Steve;
+        public SqlDatabase Reader;
 
-        public Furnace(Steve steve)
+        public Furnace(Steve steve, SqlDatabase reader)
         {
             Steve = steve;
+            Reader = reader;
         }
 
-        //public Block Melt()
-        //{
-        //    Console.WriteLine($"Hva har du lyst til å smelte?");
-        //    Steve.PrintBlocks();
-        //    var blockInput = Console.ReadLine();
-        //    Block? blockToSmelt = Steve.BlockInventory.FirstOrDefault(block => block?.Name == blockInput);
-        //    if (blockToSmelt == null)
-        //    {
-        //        Console.WriteLine($"er ikke noe å smelte");
-        //        return null;
-        //    }
-
-        //    if (blockToSmelt is Block)
-        //    {
-        //        blockToSmelt = (Block)blockToSmelt;
-        //        blockToSmelt.Name = "iron ingot";
-        //    }
-
-        //    return blockToSmelt;
-        //}
-
-        public Block MeltIron()
+        public async Task<Item> MeltOres()
         {
             Steve.PrintBlocks();
             Console.WriteLine($"Velg hvilken blokk du vil smelte");
             var ironInput = Console.ReadLine();
-            var blockToMelt = Steve.BlockInventory.FirstOrDefault(ironBlock => ironBlock.Name == ironInput);
-            if (blockToMelt.Name == "iron ore")
+            var blocks = await Steve.GetStevesBlocks();
+
+            var blockToMelt = blocks.FirstOrDefault(ironBlock => ironBlock.Name == ironInput);
+            var ironBlock = "Iron ore";
+            if (blockToMelt.Name == ironBlock)
             {
-                blockToMelt.Name = "iron";
-                Console.WriteLine($"Du smeltet iron ore til {blockToMelt.Name}");
+               await SmeltToIron();
             }
             else if (blockToMelt.Name == "gold ore")
             {
-                blockToMelt.Name = "gold";
+                blockToMelt.Name = "Gold";
                 Console.WriteLine($"Du smeltet gold ore til {blockToMelt.Name}");
+                await Reader.AddBlock(blockToMelt);
 
             }
             else
@@ -60,6 +44,16 @@ namespace Minecraft
             }
 
             return blockToMelt;
+        }
+
+        public async Task SmeltToIron()
+        {
+            var itemName = "Iron";
+            var itemQuantity = 1;
+            var item = new Item(itemName, itemQuantity);
+            await Reader.RemoveSelectedBlock("Iron ore");
+            await Reader.AddNewItem(item);
+            Console.WriteLine($"Du smeltet iron ore til {item.Name}");
         }
     }
 }

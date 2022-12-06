@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    internal class Item
+    public class Item
     {
         public string Name { get; set; }
         public int Quantity { get; set; }
@@ -16,5 +16,15 @@ namespace Minecraft
             Name = name;
             Quantity = quantity;
         }
+        public void IncreaseLoot()
+        {
+            Quantity++;
+        }
+
+        public void Use()
+        {
+            Quantity--;
+        }
+        
     }
 }

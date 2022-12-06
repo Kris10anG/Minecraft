@@ -6,13 +6,10 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    public class Block : Item
+    public class MonsterLoot
     {
-        
-        public Block(string name, int quantity) : base(name, quantity)
-        {
-        }
-
-       
+        public string Name { get; set; }
+        public int Quantity { get; set; }
+        public int MonsterId { get; set; }
     }
 }

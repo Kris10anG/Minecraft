@@ -10,68 +10,65 @@ namespace Minecraft
     internal class Mine
     {
         public Steve Steve;
-        public List<Block> Blocks;
+        private SqlDatabase _reader;
+       
         public List<Monster> Monsters;
         public int Quantity { get; private set; }
         public Random Random;
-        public Mine(Steve steve)
+        public Mine(Steve steve, SqlDatabase reader)
         {
+            _reader = reader;
+            Monsters = new List<Monster>();
+            GetStartData();
             Steve = steve;
-            Blocks = new List<Block>
-            {
-                new Block("diamond", Quantity),
-                new Block("gold", Quantity),
-                new Block("iron ore", Quantity),
-                new Block("stone", Quantity),
-                new Block("lapiz", Quantity),
-                new Block("gravel", Quantity),
-                new Block("flint", Quantity),
-                new Block("obsidian", Quantity),
-
-
-            };
-            Monsters = new List<Monster>
-            {
-                new Monster("Creeper", new List<Loot>{new Loot("Gunpovder", 0)}),
-                new Monster("zombie", new List<Loot>{new Loot("Rotten flesh", 0)}),
-                new Monster("spider", new List<Loot>{new Loot("Web", 0)}),
-                new Monster("skeleton", new List<Loot>{new Loot("Bone", 0)}),
-                new Monster("enderman", new List<Loot>{new Loot("Ender pearl", 0)}),
-
-            };
             Random = new Random();
         }
-        public void DropBlocks(HashSet<Block> blocks, Steve steve)
+
+       
+
+        public async Task GetStartData()
         {
-            steve.PickUpBlocks(blocks);
+            var monsters = await _reader.GetMonsters();
+            monsters.ForEach(x=>
+            {
+                Monsters.Add(new Monster(x.Name, x.Hearts,x.Id, new List<Loot>(), _reader));
+            });
+           await Commen.InitiateList(_reader);
+        }
+        public void DropBlocks(HashSet<Block> blocks) //sende data videre fra en metode til en annen
+        {
+            Steve.PickUpBlocks(blocks);
         }
 
-        public void DropLoot(List<Loot> loot, Steve steve)
+        public void DropLoot(List<Loot> loot)
         {
-            steve.PickUpLoot(loot);
+            Steve.PickUpLoot(loot);
         }
-        
-        public void MineBlocks()
+
+      
+        public async Task MineBlocks()
         {
             HashSet<Block> OresToPickup = new HashSet<Block>();
             for (int i = 0; i < Monsters.Count; i++) //Løkken sin størrelse er hvor mange blocks du vil mine
             {
-                var index = Random.Next(0, Blocks.Count);
-                var pickup = Blocks[index];
-                pickup.Quantity++;
+                var index = Random.Next(0, Commen.Blocks.Count);
+                var pickup = Commen.Blocks[index];
+                pickup.IncreaseLoot();
                 //Block.DropBlocks(OresToPickup, steve);
                 OresToPickup.Add(pickup);
             }
+            await _reader.AddBlocks(OresToPickup);
 
             foreach (var ore in OresToPickup) //løkker gjennom blokkene du har minet
             {
-                Console.WriteLine($"Du minet: {ore.Name} og fikk {ore.Quantity}");
+                Console.WriteLine($"Du minet: {ore.Name} og har nå {ore.Quantity} {ore.Name}");
 
             }
-            DropBlocks(OresToPickup, Steve);
+            DropBlocks(OresToPickup);
+
         }
 
-        public void FightMonsters()
+        public async Task FightMonsters()
         {
             List<Loot> MobsLoot = new List<Loot>(); // lager en tom liste av loot som heter MobsLoot
             var randomMobs = GetRandomMobs(); //lagrer det som varialbel for å bruke lista med random mobs
@@ -92,6 +89,7 @@ namespace Minecraft
                     var droppedLoot = monster.DropLoot(); //lagrer lootet til monsteret som en variabel
                     foreach (var loot in droppedLoot)
                     {
+                        await _reader.AddNewItem(loot);
                         Console.WriteLine($"Du fikk {loot.Quantity} {loot.Name}");
                     }
 
@@ -99,7 +97,7 @@ namespace Minecraft
                 }
                
             }
-            DropLoot(MobsLoot, Steve);
+            DropLoot(MobsLoot);
 
             
         }

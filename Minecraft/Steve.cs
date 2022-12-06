@@ -1,66 +1,104 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.VisualBasic;
 
 namespace Minecraft
 {
     internal class Steve
     {
-        public int Heart { get; private set; }
-        public HashSet<Block> BlockInventory;
-        //public List<Monster> LootInventory;
+        public int Hearts { get; private set; }
         public HashSet<Loot> LootInventory;
-        public List<Item> Items;
+        public HashSet<Item> Items;
         public int Sticks { get; private set; }
         public string Pickaxe { get; private set; }
         public string Sword { get; private set; }
         public Random Random { get; private set; }
         public Furnace Furnace { get; private set; }
+        public SqlDatabase Reader;
 
-        public Steve(int heart, int sticks, string pickaxe, string sword)
+        public Steve(int hearts, int sticks, string pickaxe, string sword, SqlDatabase reader)
         {
-            Heart = heart;
+            Hearts = hearts;
             Sticks = sticks;
             Pickaxe = pickaxe;
             Sword = sword;
-            BlockInventory = new HashSet<Block>();
-            Items = new List<Item>();
-            //LootInventory = new List<Monster>();
+            Items = new HashSet<Item>();
             LootInventory = new HashSet<Loot>();
-            Furnace = new Furnace(this);
+            Furnace = new Furnace(this, reader);
             Random = new Random();
-        }
+            Reader = reader;
 
-        public void PickUpBlocks(HashSet<Block> blocks)
+        }
+        public async Task PickUpBlocks(HashSet<Block> blocks)
         {
-            GetInInventory(blocks);
+           await GetInInventory(blocks);
             
         }
-
         public void PickUpLoot(List<Loot> monsters)
         {
             GetInInventory(monsters);
         }
-
-        public void GetInInventory(HashSet<Block> blocks)
+        public async Task GetInInventory(HashSet<Block> blocks)
         {
-            BlockInventory.UnionWith(blocks);
+           await Reader.AddBlocks(blocks);
         }
-
         public void GetInInventory(List<Loot> monsters)
         {
             LootInventory.UnionWith(monsters);
         }
-        public void PrintBlocks()
+        public async Task< HashSet<Block>> GetStevesBlocks()
         {
-            foreach (var block in BlockInventory)
+            var minedBlocks = await Reader.StevesBlocks();
+            var blocks = SortBlocks(minedBlocks);
+            return blocks;
+        }
+        public async Task PrintBlocks()
+        {
+            var blocks = await GetStevesBlocks();
+            foreach (var block in blocks)
             {
-                Console.WriteLine($"{block.Name} {block.Quantity}");
+                Console.WriteLine($"block: {block.Name} Antall: {block.Quantity}");
             }
         }
+        public HashSet<Block> SortBlocks(HashSet<Block> blocks)
+        {
+            HashSet<Block> OresToPickup = new HashSet<Block>();
+            foreach (var block in Commen.Blocks) //alle blokkene i spillet
+            {
+                var minedBlocks = blocks.Where(x => x.Name == block.Name); //ser de jeg har minet, finner alle elementene som heter det samme
+                var quantity = minedBlocks.Sum(mined => mined.Quantity); //bruker forrige variabel ti
+                OresToPickup.Add(new Block(block.Name, quantity)); //tar hver enkelt blokk og legger sammen alle quantitetene
+            }
+            return OresToPickup;
+        }
 
+        public async Task<HashSet<Item>> SortItems()
+        {
+            HashSet<Item> ItemList = new HashSet<Item>();
+            List<string> NameList = new List<string>();
+
+            var lootInventory = await Reader.GetItemData();
+            foreach (var loot in lootInventory)
+            {
+                if(!NameList.Contains(loot.Name))
+                {
+                    NameList.Add(loot.Name);
+
+                }
+            }
+            foreach (var name in NameList) //alle blokkene i spillet
+            {
+                var items = lootInventory.Where(x => x.Name == name); //ser de jeg har minet, finner alle elementene som heter det samme
+                var quantity = items.Sum(item => item.Quantity);
+                ItemList.Add(new Item(name, quantity));
+            }
+            return ItemList;
+        }
         public void PrintLoot()
         {
             foreach (var loot in LootInventory)
@@ -68,27 +106,113 @@ namespace Minecraft
                 Console.WriteLine($"{loot.Name} {loot.Quantity}"); 
             }
         }
-
-        public void ViewCraftingtable()
+        public async Task PrintItems()
         {
-            Console.WriteLine($"Dette er Furnace!!!" +
-                              $"1: melt");
-            var command = Console.ReadLine();
-
-            switch (command)
+            var items = await SortItems();
+            foreach (var item in items)
             {
-                case "1":
-                    Furnace.MeltIron();
-                    break;
+                Console.WriteLine($"{item.Name} {item.Quantity}");
             }
         }
 
-        public bool CheckForEnoughObsidian()
+        public async Task<bool> CheckForBlazeRod()
         {
-            var obsidianToFind = BlockInventory.FirstOrDefault(x => x.Name == "obsidian");
-            if (obsidianToFind != null && obsidianToFind.Quantity >= 11)
+            var items = SortItems();
+
+            foreach (var item in await items)
             {
-                obsidianToFind.Quantity -= 11;
+                if (item.Name == "Blaze powder" && item.Quantity >= 1)
+                {
+                    item.Use();
+                    Console.WriteLine($"Du har nok blaze powder til å lage");
+                    return true;
+                }
+            }
+            return false;
+
+        }
+        public async Task<bool> CheckEnderPearl()
+        {
+            var items = SortItems();
+            foreach (var item in await items)
+            {
+                if (item.Name == "Enderpearl" && item.Quantity >= 1)
+                {
+                    item.Use();
+                    Console.WriteLine($"Du har nok av {item.Name} til å lage Eye of ender");
+                    return true;
+                }
+            }
+            return false;
+        }
+        public async Task CreateEyeOfEnder()
+        {
+            var monsterLoot = await Reader.GetMonsterLoot("Enderpearl");
+            for (int i = 0; i < monsterLoot.Count; i++)
+            {
+                if (monsterLoot[i] is {Name: "Enderpearl"} )
+                {
+                    if (monsterLoot[i].Quantity >= 1)
+                    {
+                        var enderPearl = new Item("Eye of ender", 1);
+                        await Reader.AddNewItem(enderPearl);
+                    }
+                }
+            }
+        }
+
+        public async Task CreateEyeOfEnders()
+        {
+            var eyeOfEnder = new Item("Eye of ender", 1);
+            await Reader.AddNewItem(eyeOfEnder);
+        }
+        public async Task ConvertBlazeRod()
+        {
+            var itemName = LootInventory.FirstOrDefault(blazeRod => blazeRod.Name == "Blaze rod");
+            if (itemName is {Name: "Blaze rod"})
+            {
+                LootInventory.Remove(itemName);
+                var item = new Item("Blaze powder", 2);
+                await Reader.AddNewItem(item);
+                Console.WriteLine($"Du har nå laget {item.Name} og har {item.Quantity} stykker");
+            }
+        }
+        public async Task UseItem()
+        {
+            PrintItems();
+            var items = await Reader.GetItemData();
+            Console.WriteLine($"Hvilket item ønsker du å bruke?");
+            var itemToUse = Console.ReadLine();
+          var item =  items.FirstOrDefault(x => x.Name == itemToUse);
+            if (item == null) return;
+            switch (itemToUse)
+            {
+                case "Golden apple":
+                    var heartsIncrease = 5;
+                    Hearts += heartsIncrease;
+                    Console.WriteLine($"Du økte hjertene med {heartsIncrease} og har nå {Hearts}");
+                    break;
+                
+            }
+        }
+        public void LoseHearts()
+        {
+            var heartsLost = -3;
+            Hearts -= heartsLost;
+            Console.WriteLine($"Steve lost {heartsLost} hearts and now has {Hearts} hearts left!");
+        }
+        public void Melt()
+        {
+            Furnace.MeltOres();
+        }
+
+        public async Task<bool> CheckForEnoughObsidian()
+        {
+            var blocks = await GetStevesBlocks();
+            var obsidianToFind = blocks.FirstOrDefault(x => x.Name == "Obsidian");
+            if (obsidianToFind != null && obsidianToFind.Quantity >= 10)
+            {
+                obsidianToFind.Quantity -= 10;
                 Console.WriteLine($"Du har nå bygget en portal til nether av obsidian!");
                 return true;
             }
@@ -100,41 +224,39 @@ namespace Minecraft
             }
             
         }
-            
 
-        public void MakeFlint()
+        public void HitMonsterWithSword(Monster monster)
         {
+            monster.LoseHearts();
+            Console.WriteLine($"You hit {monster.Name} with {Sword}! {monster.Name} has {monster.Hearts} hearts left");
+            
+        }
+
+        public async Task MakeFlint()
+        {
+
             var name = "Flint and steel";
             var quantity = 1;
             var flintBlock = new Item(name, quantity);
-            Items.Add(flintBlock);
+           await Reader.AddNewItem(flintBlock);
         }
 
-        public void CheckForEnoughGravel()
+        public async Task CheckForEnoughGravel()
         {
-            var flintToPrint = BlockInventory.FirstOrDefault(x => x.Name == "flint");
+            var blocks = await GetStevesBlocks();
+
+            var flintToPrint = blocks.FirstOrDefault(x => x.Name == "Gravel");
+
             if (flintToPrint.Name != null && flintToPrint.Quantity >= 1)
             {
-                flintToPrint.Quantity -= 1;
-                MakeFlint();
+                var userInput = Console.ReadLine();
+                await Reader.RemoveSelectedBlock(userInput);
+                var flintItem = new Item("Flint", 1);
+                await Reader.AddNewItem(flintItem);
             }
-            //foreach (var block in BlockInventory.ToList())
-            //{
-            //    if (block.Name == "gravel")
-            //    {
-            //        block.Quantity -= 1;
-            //        MakeFlint();
-            //    }
-            //}
         }
 
-        public void PrintItems()
-        {
-            foreach (var item in Items)
-            {
-                Console.WriteLine($"{item.Name} antall: {item.Quantity}");
-            }
-        }
+      
         public void MineGravelToFlint()
         {
             var randomHitChance = Random.Next(1, 3);
@@ -149,10 +271,17 @@ namespace Minecraft
             }
         }
 
-        public bool CheckForFlintAndSteel()
+        public async Task<bool> CheckForFlintAndSteel()
         {
-            var blockToFind = BlockInventory.FirstOrDefault(x => x.Name == "iron");
-            if (blockToFind != null && blockToFind.Quantity >= 1) {
+          var items = await Reader.GetItemData();
+          var itemToFind =items.FirstOrDefault(x => x.Name == "Flint and steel");
+            if (itemToFind != null)
+            {
+                return true;
+            }
+            var blocks = await GetStevesBlocks();
+            var blockToFind = blocks.FirstOrDefault(x => x.Name == "Iron");
+            if (blockToFind != null) {
 
                     Console.WriteLine($"Du har nok iron");
             }
@@ -161,7 +290,7 @@ namespace Minecraft
                 return false;
             }
 
-            var flintToFind = BlockInventory.FirstOrDefault(x => x.Name == "flint");
+            var flintToFind = blocks.FirstOrDefault(x => x.Name == "Flint");
 
             if (flintToFind != null && flintToFind.Quantity >= 1)
             {
@@ -174,15 +303,57 @@ namespace Minecraft
             return true;
         }
         
-
         public void CraftNetherPortal()
         {
             Console.WriteLine($"You have crafted the nether portal!!");
         }
-       
 
 
-        //public void MeltIron()
+        public async Task SteveHandler()
+        {
+            Console.WriteLine($"Hva ønsker du sjekke?\n" +
+                              $"1: BlockInventory\n" +
+                              $"2: Monsters loot inventory\n" +
+                              $"3: Sjekke om du kan lage tenner\n" +
+                              $"4: Item list\n" +
+                              $"5: Bruke Items\n" +
+                              $"6: lag blazepowder\n" +
+                              $"7: lag Eye of ender");
+
+            var option = Console.ReadLine();
+            switch (option)
+            {
+                case "1":
+                   await PrintBlocks();
+                    break;
+                case "2":
+                    PrintLoot();
+                    break;
+                case "3":
+                   await CheckForFlintAndSteel();
+                    break;
+                case "4":
+                   await PrintItems();
+                    break;
+                case "5":
+                   await UseItem();
+                    break;
+                case "6":
+                     await ConvertBlazeRod();
+                    break;
+                case "7":
+                    var enderPearl = CheckEnderPearl();
+                    var blazeRod = CheckForBlazeRod();
+                    if (await enderPearl && await blazeRod)
+                    {
+                       await CreateEyeOfEnders();
+                    }
+                    break;
+            }
+        }
+
+
+        //public void MeltOres()
         //{
         //    if ()
         //    {

@@ -6,13 +6,7 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    public class Block : Item
+    internal class Enderdragon
     {
-        
-        public Block(string name, int quantity) : base(name, quantity)
-        {
-        }
-
-       
     }
 }

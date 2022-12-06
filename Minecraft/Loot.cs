@@ -6,20 +6,11 @@ using System.Threading.Tasks;
 
 namespace Minecraft
 {
-    internal class Loot
+    internal class Loot :Item
     {
-        public string Name { get; private set; }
-        public int Quantity { get; private set; }
-
-        public Loot(string name, int quantity)
+        public Loot(string name, int quantity) : base(name, quantity)
         {
-            Name = name;
-            Quantity = quantity;
-        }
-
-        public void IncreaseLoot()
-        {
-            Quantity++;
+            
         }
 
     }
