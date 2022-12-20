@@ -115,7 +115,7 @@ namespace Minecraft
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.ExecuteAsync(query, new {item.Name, item.Quantity});
+                var result = connection.Execute(query, new {item.Name, item.Quantity});
                 if (result > 0)
                 {
                     Console.WriteLine($"Item added");
@@ -145,7 +145,7 @@ namespace Minecraft
                 await connection.OpenAsync();
                 foreach (var block in blocks)
                 {
-                    var result = await connection.ExecuteAsync(query, new {block.Name, block.Quantity});
+                    var result = connection.Execute(query, new {block.Name, block.Quantity});
                     if (result > 0) //sier noe om antall rader, f.eks. rad 1 name = diamond
                     {
                         //Console.WriteLine($"Blocks added");
@@ -160,7 +160,7 @@ namespace Minecraft
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                    var result = await connection.ExecuteAsync(query, new {userInput});
+                    var result =  connection.Execute(query, new {userInput});
                     if (result > 0) //sier noe om antall rader, f.eks. rad 1 name = diamond
                     {
                         Console.WriteLine($"Fjernet {userInput}");
@@ -175,7 +175,7 @@ namespace Minecraft
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                var result = await connection.ExecuteAsync(query, new { block.Name, block.Quantity });
+                var result =  connection.Execute(query, new { block.Name, block.Quantity });
                     if (result > 0) //sier noe om antall rader, f.eks. rad 1 name = diamond
                     {
                         //Console.WriteLine($"Block added");

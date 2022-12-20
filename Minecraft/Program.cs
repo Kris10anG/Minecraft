@@ -6,13 +6,11 @@ namespace Minecraft
 {
     internal class Program
     {
-        //Minecraft oppgave!!
-        //I Minecraft er det mange ting du kan gjøre! Her er noen av tingene!
-
+        
         //NETHER
         /*
          *NetherHandler();
-         *SearchForNetherCastle(); Kan kanskje møte fiender (pigling
+         *SearchForNetherCastle(); Kan kanskje møte fiender
          *BlazeSpawner();
          *SeekBlaze();
          *KillBlaze();
@@ -25,7 +23,6 @@ namespace Minecraft
          *CheckForEnoughObsidian()
          *CraftNetherPortal()
          * CheckForEnoughFlintAndIron() Flint and steel item
-         *
          */
         //Minecraft oppgave!!
         /*I Minecraft er det mange ting du kan gjøre! Her er noen av tingene!

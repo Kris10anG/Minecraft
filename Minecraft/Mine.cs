@@ -127,8 +127,7 @@ namespace Minecraft
                 Console.WriteLine($"Hva ønsker du å gjøre i hula\n" +
                                   $"u: Mine blocks\n" +
                                   $"i: Drepe Monsters\n" +
-                                  $"x: exit\n" +
-                                  $"q: møte Thorbjørn og huleboerne?");
+                                  $"x: exit\n");
                 var input = Console.ReadLine();
             switch (input)
             {

@@ -20,14 +20,13 @@ namespace Minecraft
 
         public async Task<Item> MeltOres()
         {
-            Steve.PrintBlocks();
+           await Steve.PrintBlocks();
             Console.WriteLine($"Velg hvilken blokk du vil smelte");
             var ironInput = Console.ReadLine();
             var blocks = await Steve.GetStevesBlocks();
 
             var blockToMelt = blocks.FirstOrDefault(ironBlock => ironBlock.Name == ironInput);
-            var ironBlock = "Iron ore";
-            if (blockToMelt.Name == ironBlock)
+            if (blockToMelt.Name == "Iron ore")
             {
                await SmeltToIron();
             }

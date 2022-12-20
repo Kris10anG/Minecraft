@@ -115,53 +115,69 @@ namespace Minecraft
             }
         }
 
-        public async Task<bool> CheckForBlazeRod()
+        //public async Task<bool> CheckForBlazeRod()
+        //{
+        //    var items = SortItems();
+
+        //    foreach (var item in await items)
+        //    {
+        //        if (item.Name == "Blaze powder" && item.Quantity >= 1)
+        //        {
+        //            item.Use();
+        //            Console.WriteLine($"Du har nok blaze powder til å lage");
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+
+        //}
+
+        public async Task<bool> CheckItem(string itemName)
         {
             var items = SortItems();
-
             foreach (var item in await items)
             {
-                if (item.Name == "Blaze powder" && item.Quantity >= 1)
+                if (item.Name == itemName && item.Quantity >= 1)
                 {
-                    item.Use();
-                    Console.WriteLine($"Du har nok blaze powder til å lage");
-                    return true;
-                }
-            }
-            return false;
-
-        }
-        public async Task<bool> CheckEnderPearl()
-        {
-            var items = SortItems();
-            foreach (var item in await items)
-            {
-                if (item.Name == "Enderpearl" && item.Quantity >= 1)
-                {
-                    item.Use();
+                    await Reader.RemoveItem(itemName);
                     Console.WriteLine($"Du har nok av {item.Name} til å lage Eye of ender");
                     return true;
                 }
             }
+
             return false;
         }
-        public async Task CreateEyeOfEnder()
-        {
-            var monsterLoot = await Reader.GetMonsterLoot("Enderpearl");
-            for (int i = 0; i < monsterLoot.Count; i++)
-            {
-                if (monsterLoot[i] is {Name: "Enderpearl"} )
-                {
-                    if (monsterLoot[i].Quantity >= 1)
-                    {
-                        var enderPearl = new Item("Eye of ender", 1);
-                        await Reader.AddNewItem(enderPearl);
-                    }
-                }
-            }
-        }
+        //public async Task<bool> CheckEnderPearl()
+        //{
+        //    var items = SortItems();
+        //    foreach (var item in await items)
+        //    {
+        //        if (item.Name == "Enderpearl" && item.Quantity >= 1)
+        //        {
+        //            item.Use();
+        //            Console.WriteLine($"Du har nok av {item.Name} til å lage Eye of ender");
+        //            return true;
+        //        }
+        //    }
+        //    return false;
+        //}
+        //public async Task CreateEyeOfEnder()
+        //{
+        //    var monsterLoot = await Reader.GetMonsterLoot("Enderpearl");
+        //    for (int i = 0; i < monsterLoot.Count; i++)
+        //    {
+        //        if (monsterLoot[i] is {Name: "Enderpearl"} )
+        //        {
+        //            if (monsterLoot[i].Quantity >= 1)
+        //            {
+        //                var enderPearl = new Item("Eye of ender", 1);
+        //                await Reader.AddNewItem(enderPearl);
+        //            }
+        //        }
+        //    }
+        //}
 
-        public async Task CreateEyeOfEnders()
+        public async Task CreateEyeOfEnder()
         {
             var eyeOfEnder = new Item("Eye of ender", 1);
             await Reader.AddNewItem(eyeOfEnder);
@@ -197,13 +213,12 @@ namespace Minecraft
         }
         public void LoseHearts()
         {
-            var heartsLost = -3;
-            Hearts -= heartsLost;
-            Console.WriteLine($"Steve lost {heartsLost} hearts and now has {Hearts} hearts left!");
+            Hearts -= 3;
+            Console.WriteLine($"Steve lost 3 hearts and now has {Hearts} hearts left!");
         }
-        public void Melt()
+        public async Task Melt()
         {
-            Furnace.MeltOres();
+            await Furnace.MeltOres();
         }
 
         public async Task<bool> CheckForEnoughObsidian()
@@ -342,12 +357,16 @@ namespace Minecraft
                      await ConvertBlazeRod();
                     break;
                 case "7":
-                    var enderPearl = CheckEnderPearl();
-                    var blazeRod = CheckForBlazeRod();
-                    if (await enderPearl && await blazeRod)
+                    //var enderPearl = CheckEnderPearl();
+                    //var blazeRod = CheckForBlazeRod();
+                    if (await CheckItem("Enderpearl")
+                    && await CheckItem("Blaze powder"))
                     {
-                       await CreateEyeOfEnders();
+                       await CreateEyeOfEnder();
                     }
+                    break;
+                case "8":
+                    MineGravelToFlint();
                     break;
             }
         }

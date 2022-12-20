@@ -192,7 +192,7 @@ namespace Minecraft
                 else
                 {
                     Console.WriteLine($"Du drepte Blaze med {Steve.Sword}");
-                    Console.WriteLine($"du fikk {blaze.Loot[index:0]}");
+                    Console.WriteLine($"du fikk {blaze.Loot[0].Name}");
                     Steve.PickUpLoot(blaze.Loot);
                     
                 }

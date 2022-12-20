@@ -8,11 +8,8 @@ namespace Minecraft
 {
     public class Game
     {
-        //
         public async Task Init(string connectionstring)
         {
-
-
             var sqlreader = new SqlDatabase(connectionstring);
             var steve = new Steve(10, 64, "pickaxe", "sword", sqlreader);
             var mine = new Mine(steve, sqlreader);
@@ -22,11 +19,12 @@ namespace Minecraft
             {
                 Console.WriteLine($"Hva vil du gjøre?\n" +
                                   $"Utforske hula: 1\n" +
-                                  $"open Inventory: 2\n" +
+                                  $"Steve Sine egenskaper: 2\n" +
                                   $"Smelte iron ore: 3\n" +
                                   $"Mine flint fra gravel: 4\n" +
-                                  $"Dra til nether: 5\n" +
-                                  $"Lage Tenner: 6");
+                                  $"Lage Tenner: 5\n" +
+                                  $"Dra til Nether: 6\n" +
+                                  $"Dra til End: 7");
                 var input = Console.ReadLine();
                 switch (input)
                 {
@@ -34,18 +32,20 @@ namespace Minecraft
                         mine.MineMode();
                         break;
                     case "2":
-                        steve.SteveHandler();
+                       await steve.SteveHandler();
                         break;
                     case "3":
-                        steve.Melt();
+                       await steve.Melt();
                         break;
                     case "4":
                         steve.MineGravelToFlint();
                         break;
                     case "5":
+                       await steve.MakeFlint();
+                        break;
+                    case "6":
                         var enoughObsidian = await steve.CheckForEnoughObsidian();
                         var flint = await steve.CheckForFlintAndSteel();
-
                         if (enoughObsidian && flint)
                         {
                             nether.NetherHandler();
@@ -55,16 +55,8 @@ namespace Minecraft
                             Console.WriteLine($"Du kan ikke lage portal til nether");
                         }
                         break;
-                    case "6":
-                       await steve.MakeFlint();
+                    case "7":
                         break;
-
-                        //case "2":
-                        //    while (true) //sjekker om jeg har lagd en nether portal
-                        //    {
-
-                        //    }
-                        //    break;
                 }
             }
         }
