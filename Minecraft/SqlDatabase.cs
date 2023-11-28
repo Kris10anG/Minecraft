@@ -26,7 +26,7 @@ namespace Minecraft
         //        await connection.OpenAsync();
         //        var results = connection.Query<ItemData>(query).ToList();
         //        Console.WriteLine($"you used {quantity} {name}");
-                
+
         //    }
 
         //    return results;
