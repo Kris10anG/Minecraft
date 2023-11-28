@@ -50,7 +50,7 @@ namespace Minecraft
             var itemName = "Iron";
             var itemQuantity = 1;
             var item = new Item(itemName, itemQuantity);
-            await Reader.RemoveSelectedBlock("Iron ore");
+            await Reader.RemoveSelectedBlock("Iron ore", 1);
             await Reader.AddNewItem(item);
             Console.WriteLine($"Du smeltet iron ore til {item.Name}");
         }

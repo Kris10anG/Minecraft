@@ -34,6 +34,20 @@ namespace Minecraft
             Reader = reader;
 
         }
+
+        public void NoHearts(string chosenChar)
+        {
+            if (Hearts <= 0)
+            {
+                Console.WriteLine($"You died ;(\n" +
+                                  $"Press {chosenChar} to start over!");
+                var userInput = Console.ReadLine();
+                if (userInput == chosenChar)
+                {
+                    Environment.Exit(0);
+                }
+            }
+        }
         public async Task PickUpBlocks(HashSet<Block> blocks)
         {
            await GetInInventory(blocks);
@@ -139,7 +153,7 @@ namespace Minecraft
             {
                 if (item.Name == itemName && item.Quantity >= 1)
                 {
-                    await Reader.RemoveItem(itemName);
+                    //await Reader.RemoveItem(itemName, 1);
                     Console.WriteLine($"Du har nok av {item.Name} til å lage Eye of ender");
                     return true;
                 }
@@ -207,8 +221,11 @@ namespace Minecraft
                     var heartsIncrease = 5;
                     Hearts += heartsIncrease;
                     Console.WriteLine($"Du økte hjertene med {heartsIncrease} og har nå {Hearts}");
+                    await Reader.RemoveSelectedBlock("Golden apple", 1);
                     break;
-                
+                case "Bow":
+
+                    break;
             }
         }
         public void LoseHearts()
@@ -216,29 +233,72 @@ namespace Minecraft
             Hearts -= 3;
             Console.WriteLine($"Steve lost 3 hearts and now has {Hearts} hearts left!");
         }
+
+        public void AttackEnderdragon(Enderdragon enderdragon)
+        {
+            enderdragon.TakeDamageFromSteve(this);
+            Console.WriteLine($"You attacked {enderdragon.Name}! It has {enderdragon.Hearts} left");
+        }
+
+        public void TakeDamageFromEnderdragon(Enderdragon enderdragon)
+        {
+            var enemyAttack = enderdragon.AttackSteve();
+            foreach (var attack in enemyAttack)
+            {
+                Hearts -= attack.AttackDamage;
+                Console.WriteLine($"{enderdragon.Name} used {attack.AttackName} and tok {attack.AttackDamage} hearts from steve");
+            }
+            Console.WriteLine($"Steve har {Hearts} left");
+        }
+       
         public async Task Melt()
         {
             await Furnace.MeltOres();
         }
 
-        public async Task<bool> CheckForEnoughObsidian()
+        public async Task<bool> CheckQuantity(string itemName, int quantity, Task<List<ItemData>> getItem )
         {
-            var blocks = await GetStevesBlocks();
-            var obsidianToFind = blocks.FirstOrDefault(x => x.Name == "Obsidian");
-            if (obsidianToFind != null && obsidianToFind.Quantity >= 10)
+            var items = await Reader.GetItemData();
+            var itemToFind = items.FirstOrDefault(item => item.Name == itemName);
+
+            if (itemToFind != null && itemToFind.Quantity >= quantity)
             {
-                obsidianToFind.Quantity -= 10;
-                Console.WriteLine($"Du har nå bygget en portal til nether av obsidian!");
+                Console.WriteLine($"Du har nok av {itemToFind.Name}");
                 return true;
             }
-
-            else
-            {
-                Console.WriteLine($"Du har ikke nok obsidian");
-                return false;
-            }
-            
+            return false;
         }
+
+        public async Task<bool> CheckQuantity(string itemName, int quantity, Task<HashSet<Block>> getItem)
+        {
+            var steveBlocks = await GetStevesBlocks();
+            var itemToFind = steveBlocks.FirstOrDefault(item => item.Name == itemName);
+            if (itemToFind != null && itemToFind.Quantity >= quantity)
+            {
+                        Console.WriteLine($"Du har nok av {itemToFind.Name}");
+                        return true;
+            }
+
+            return false;
+        }
+        //refaktorerte denne metoden med CheckQuanity metoden for å kunne velge hvilken blokk jeg vil sjekke
+        //public async Task<bool> CheckForEnoughObsidian()
+        //{
+        //    var blocks = await GetStevesBlocks();
+        //    var obsidianToFind = blocks.FirstOrDefault(x => x.Name == "Obsidian");
+        //    if (obsidianToFind != null && obsidianToFind.Quantity >= 10)
+        //    {
+        //        obsidianToFind.Quantity -= 10;
+        //        Console.WriteLine($"Du har nå bygget en portal til nether av obsidian!");
+        //        return true;
+        //    }
+
+        //    else
+        //    {
+        //        Console.WriteLine($"Du har ikke nok obsidian");
+        //        return false;
+        //    }
+        //}
 
         public void HitMonsterWithSword(Monster monster)
         {
@@ -256,29 +316,38 @@ namespace Minecraft
            await Reader.AddNewItem(flintBlock);
         }
 
-        public async Task CheckForEnoughGravel()
+        //public async Task CheckForEnoughGravel()
+        //{
+        //    var items = await Reader.GetItemData();
+        //    var item = CheckQuantity("Flint", 1, items,);
+
+        //    //var flintToPrint = blocks.FirstOrDefault(x => x.Name == "Gravel");
+
+        //    //if (flintToPrint.Name != null && flintToPrint.Quantity >= 1)
+        //    //{
+        //    //    var userInput = Console.ReadLine();
+        //    //    await Reader.RemoveSelectedBlock(userInput, 1);
+        //    //    var flintItem = new Item("Flint", 1);
+        //    //    await Reader.AddNewItem(flintItem);
+        //    //}
+
+        //}
+
+        public async Task GetItem(string itemName, int itemQuantity)
         {
-            var blocks = await GetStevesBlocks();
-
-            var flintToPrint = blocks.FirstOrDefault(x => x.Name == "Gravel");
-
-            if (flintToPrint.Name != null && flintToPrint.Quantity >= 1)
-            {
-                var userInput = Console.ReadLine();
-                await Reader.RemoveSelectedBlock(userInput);
-                var flintItem = new Item("Flint", 1);
-                await Reader.AddNewItem(flintItem);
-            }
+            var item = new Item(itemName, itemQuantity);
+           await Reader.AddNewItem(item);
         }
-
-      
-        public void MineGravelToFlint()
+        public async Task MineGravelToFlint()
         {
             var randomHitChance = Random.Next(1, 3);
             if (randomHitChance == 2)
             {
                 Console.WriteLine($"Du fikk flint");
-                CheckForEnoughGravel();
+                await GetItem("Flint", 1);
+                await Reader.RemoveSelectedBlock("Gravel", 1);
+
+
             }
             else
             {
@@ -306,6 +375,9 @@ namespace Minecraft
             }
 
             var flintToFind = blocks.FirstOrDefault(x => x.Name == "Flint");
+            //
+            var blockList = Reader.StevesBlocks();
+            var flint = CheckQuantity("Flint", 1, blockList);
 
             if (flintToFind != null && flintToFind.Quantity >= 1)
             {

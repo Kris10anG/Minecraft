@@ -17,6 +17,20 @@ namespace Minecraft
             _connectionString = connectionString;
         }
 
+        //public async Task<List<ItemData>> DeleteSelectedQuantity(string name, int quantity)
+        //{
+        //    List<ItemData> results = new List<ItemData>();
+        //    var query = $"DELETE {quantity} FROM Item WHERE (Name = {name})";
+        //    using (var connection = new SqlConnection(_connectionString))
+        //    {
+        //        await connection.OpenAsync();
+        //        var results = connection.Query<ItemData>(query).ToList();
+        //        Console.WriteLine($"you used {quantity} {name}");
+                
+        //    }
+
+        //    return results;
+        //}
         public async Task<List<Block>> GetBlocks()
         {
             List<Block> blocks = new List<Block>();
@@ -93,19 +107,27 @@ namespace Minecraft
             return Items;
         }
 
-        public async Task<List<ItemData>> RemoveItem(string itemName)
+        //public async Task RemoveItem(string itemName)
+        //{
+        //    var query = $@"DELETE TOP (1) FROM Item WHERE Name = @itemName";
+        //    using (var connection = new SqlConnection(_connectionString))
+        //    {
+        //        await connection.OpenAsync();
+        //        var rest = connection.Execute(query, new {itemName});
+        //    }
+        //}
+        public async Task RemoveItem(string itemName, int quantity)
         {
-            List<ItemData> Items = new List<ItemData>();
-            var query = $@"DELETE TOP (1) FROM Item WHERE Name = @itemName";
+            var query = $@"DELETE TOP({quantity}) FROM Item WHERE Name = @itemName";
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
-                Items = connection.Query<ItemData>(query).ToList();
-                Console.WriteLine($"");
-                
+                var rest = connection.Execute(query, new { itemName });
+                if (rest > 0)
+                {
+                    Console.WriteLine($"du brukte {quantity} {itemName}");
+                }
             }
-
-            return Items;
         }
 
         public async Task AddNewItem(Item item)
@@ -154,16 +176,16 @@ namespace Minecraft
 
             }
         }
-        public async Task RemoveSelectedBlock(string userInput)
+        public async Task RemoveSelectedBlock(string userInput, int quantity)
         {
-            var query = $@"DELETE TOP (1) FROM MinedBlocks WHERE Name = @userInput";
+            var query = $@"DELETE TOP ({quantity}) FROM MinedBlocks WHERE Name = @userInput";
             using (var connection = new SqlConnection(_connectionString))
             {
                 await connection.OpenAsync();
                     var result =  connection.Execute(query, new {userInput});
                     if (result > 0) //sier noe om antall rader, f.eks. rad 1 name = diamond
                     {
-                        Console.WriteLine($"Fjernet {userInput}");
+                        Console.WriteLine($"Du brukte {quantity} {userInput}");
                     }
             }
         }

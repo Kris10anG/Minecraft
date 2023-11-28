@@ -49,7 +49,7 @@ namespace Minecraft
         public async Task MineBlocks()
         {
             HashSet<Block> OresToPickup = new HashSet<Block>();
-            for (int i = 0; i < Monsters.Count; i++) //Løkken sin størrelse er hvor mange blocks du vil mine
+            for (int i = 0; i < 6; i++) //Løkken sin størrelse er hvor mange blocks du vil mine
             {
                 var index = Random.Next(0, Commen.Blocks.Count);
                 var pickup = Commen.Blocks[index];
@@ -118,7 +118,7 @@ namespace Minecraft
             return MonstersToGet; //returnerer lista med monsterne
         }
        
-        public void MineMode()
+        public async Task MineMode()
         {
             var run = true;
             
@@ -132,10 +132,10 @@ namespace Minecraft
             switch (input)
             {
                 case "u":
-                    MineBlocks();
+                   await MineBlocks();
                     break;
                 case "i":
-                    FightMonsters();
+                   await FightMonsters();
                     break;
                 case "x":
                     run = false;
